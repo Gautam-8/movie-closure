@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <style>
+     input{
+        width:550px;
+        height:60px;
+        border-radius: 50px;
+        font-size:xx-large;
+        text-align: center;
+        color: tomato;
+    }
+
+    #movies {
+      height: 320px;
+      width: 400px;
+      overflow-y: scroll;
+      border-top: none;
+      margin-left:80px;
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+      
+    }
+   ::-webkit-scrollbar{
+     display: none;
+   }
+    #movielist{
+      display: flex;
+     
+      background-color:#334366;
+      margin: 5px;
+      
+    }
+    #movielist img{
+      width:80px;
+      height:110px;
+      margin:5px;
+     
+
+    }
+    #movielist img,p:hover{
+      cursor: pointer;
+    }
+   #mbody{
+     display: flex;
+    
+   }
+   #show{
+     position:fixed;
+     right:0;
+   }
+   #cinema{
+     display: flex;
+     margin:10px;
+     width:800px;
+   }
+   #cinema p{
+     margin-left:10px;
+    font-family: sans-serif;
+    font-weight: bold;
+   }
+   #imgr{
+        width:120px;
+        height:120px;
+    }
+    #trend{
+    
+      display: grid;
+      grid-template-columns: 25% 25% 25% 25%;
+      gap:35px;
+    
+    }
+    #trend img{
+      width:330px;
+    }
+    #movies p{
+      color:white;
+    }
+   
+
+  </style>
+  <body>
+   
+    <div id="mbody">
+    <div id = "trend"></div>
+    <div id ="cinema"></div>
+   
+    <div id='show'>
+    <input oninput="debounce(main,1000)" type="text" id="movie" placeholder="Enter movie name" />
+
+    <div id ="movies"></div>
+  </div>
+</div>
+  </body>
+  <script>
+
+var timerId;
+
+let movies_div = document.getElementById('movies');
+
+
+//trending
+async function trending(){
+
+   let tres = await fetch('https://api.themoviedb.org/3/movie/popular?api_key=9924b9a1464a971c6e032f0012a561c7');
+   let tdata = await tres.json();
+
+   console.log('tdata.:',tdata);
+
+   let tmovies = tdata.results;
+   tshow(tmovies)
+}
+
+trending();
+
+
+let trend = document.getElementById('trend');
+function tshow(tmovies){
+
+  tmovies.forEach(function(movie){
+
+let div = document.createElement('div');
+
+let img = document.createElement('img');
+img.src = `https://image.tmdb.org/t/p/w500/${movie.poster_path}`;
+console.log(movie.poster_path);
+
+
+
+div.append(img);  
+trend.append(div);
+
+  })
+
+
+}
+//trending ends
+
+async function searchMovies(movie_name){
+
+    try{
+    let res = await fetch(`https://www.omdbapi.com/?s=${movie_name}&apikey=5eb6d1dc`)
+    let data = await res.json();
+
+    return data;
+
+    } catch (e){
+        console.log("e:",e);
+    }
+
+    
+}
+
+function appendMovies(movies){
+  
+    if(movies === undefined){
+        return false
+    }
+
+    movies_div.innerHTML = null;
+
+
+movies.forEach(function(movie){
+
+let div = document.createElement('div');  div.setAttribute('id','movielist')
+
+let divp = document.createElement('div');
+    let p = document.createElement('p');
+    p.innerText = movie.Title;
+
+    let ptype = document.createElement('p');
+    ptype.innerText = movie.Type;
+
+    let img = document.createElement('img');   
+    img.src = movie.Poster;
+
+    let imdb = movie.imdbID;
+
+    div.onclick = function(){
+      cinema(movie,imdb);
+    }
+     
+    divp.append(p,ptype)
+    div.append(img,divp);
+    movies_div.append(div);
+    
+
+});
+
+
+}
+
+
+async function main(){
+
+    //get search movies
+     let name = document.getElementById('movie').value;
+
+     if(name.length < 3){
+         return false;
+     }
+
+     let res = await searchMovies(name);
+
+     let movies_data = res.Search;
+
+     appendMovies(movies_data);
+     
+     console.log('res:',res);
+
+}
+
+
+function debounce(func,delay){
+
+//func = main();
+
+if(timerId){
+    clearTimeout(timerId);
+}
+
+timerId = setTimeout(function(){
+
+    func();
+
+},delay);
+
+
+}
+
+//particular movie on click
+
+let container = document.getElementById('cinema');
+
+async function cinema(movie,imdb){
+
+  trend.innerHTML = null;
+
+  let res1 = await fetch(`https://www.omdbapi.com/?i=${imdb}&apikey=5eb6d1dc`);
+  let movie_info = await res1.json();
+
+  console.log(movie_info)
+  container.innerHTML = null;
+
+    let p = document.createElement('p');
+    p.innerText = movie.Title;
+
+    let img = document.createElement('img');   
+    img.src = movie.Poster;
+
+    let imdbmarks = document.createElement('p');
+     imdbmarks.innerText = 'IMDB : '+ movie_info.imdbRating;
+
+     let director = document.createElement('p');
+     director.innerText ='Director : '+ movie_info.Director;
+
+     let plot = document.createElement('p');
+     plot.innerText ='Plot : '+ movie_info.Plot
+
+     let cast = document.createElement('p');
+     cast.innerHTML = 'CAST : ' + movie_info.Actors;
+
+     let imgr = document.createElement('img');   imgr.setAttribute('id','imgr');
+    imgr.src = 'https://media0.giphy.com/media/RG4px8UayRHy9GR7PM/200.gif';
+
+     let divcast = document.createElement('div');
+    
+
+     if(movie_info.imdbRating >= 7){
+      divcast.append(p,director,imdbmarks,cast,plot,imgr);
+    }else{
+      divcast.append(p,director,imdbmarks,cast,plot);
+    }
+
+    container.append(img,divcast);
+}
+
+
+  </script>
+</html>
